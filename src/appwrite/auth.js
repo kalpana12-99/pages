@@ -1,4 +1,4 @@
-import conf from "../conf/conf";
+import conf from "../conf/conf.js";
 import { Client, Account, ID } from "appwrite";
 
 export class AuthService {
@@ -13,6 +13,8 @@ export class AuthService {
     this.account = new Account(this.client);
   }
 
+  // create account
+
   async createAccount({ email, password, name }) {
     try {
       const userAccount = await this.account.create(
@@ -23,8 +25,8 @@ export class AuthService {
       );
 
       if (userAccount) {
-        //call another function
-        return this.login({ email, password });
+        await this.login({ email, password });
+        return this.getCurrentUser();
       } else {
         return userAccount;
       }
@@ -33,33 +35,42 @@ export class AuthService {
     }
   }
 
+  // login
+
   async login({ email, password }) {
     try {
-      return await this.account.createEmailSession(email, password);
+      await this.account.createEmailPasswordSession(email, password);
+      return this.getCurrentUser();
     } catch (error) {
       throw error;
     }
   }
 
-  async getCurrrentUser() {
+  // get current user
+
+  async getCurrentUser() {
     try {
       return await this.account.get();
     } catch (error) {
-      console.log("Appwrite service :: getCurrentUser :: error", error);
+      console.log(
+        "Appwrite Service Error: Could not get current user. ",
+        error
+      );
+      return null;
     }
-
-    return null;
   }
+
+  // logout
 
   async logout() {
     try {
       await this.account.deleteSessions();
     } catch (error) {
-      console.log("Appwrite service :: logout :: error", error);
+      throw error;
     }
   }
 }
 
 const authService = new AuthService();
 
-export default authService;
+export { authService };

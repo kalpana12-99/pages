@@ -1,56 +1,67 @@
-import React, { useState } from "react";
-import authService from "../appwrite/auth";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../store/authSlice";
-import { Button, Input, Logo } from "./index.js";
+import { login } from "../../features/authSlice.js";
+import { Button, Input, Logo, Select } from "../index.js";
 import { useDispatch } from "react-redux";
+import { authService } from "../../appwrite/auth.js";
 import { useForm } from "react-hook-form";
+import { toast, Toaster } from "sonner";
+import conf from "../../conf/conf.js";
 
-function Signup() {
+const Signup = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
-  const dispatch = useDispatch();
-  const { register, handleSubmit } = useForm();
 
-  const create = async (data) => {
-    setError("");
+  const dispatch = useDispatch();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
+  const handlesignup = async (data) => {
     try {
-      const userData = await authService.createAccount(data);
-      if (userData) {
+      const session = await authService.createAccount(data);
+
+      if (session) {
         const userData = await authService.getCurrentUser();
         if (userData) dispatch(login(userData));
         navigate("/");
       }
     } catch (error) {
-      setError(error.message);
+      console.log("Could not create account. Error: ", error.message);
+      toast.error("Could not create account.", {
+        duration: 3000,
+        position: "bottom-right",
+      });
     }
   };
 
   return (
     <div className="flex items-center justify-center">
+      <Toaster richColors position="bottom-right" />
       <div
-        className={`mx-auto w-full max-w-lg bg-gray-100 rounded-xl p-10 border border-black/10`}
+        className={`mx-auto w-full max-w-lg bg-white rounded-xl p-10 md:border md:border-zinc-200 md:shadow-lg md:shadow-zinc-600`}
       >
         <div className="mb-2 flex justify-center">
-          <span className="inline-block w-full max-w-[100px]">
-            <Logo width="100%" />
-          </span>
+          <div className="w-full flex justify-center">
+            <img src={conf.scribblrLogo} alt="scribblr-logo" className="w-12" />
+          </div>
         </div>
         <h2 className="text-center text-2xl font-bold leading-tight">
           Sign up to create account
         </h2>
-        <p className="mt-2 text-center text-base text-black/60">
+        <p className="mt-2 text-center text-base text-zinc-500">
           Already have an account?&nbsp;
           <Link
             to="/login"
             className="font-medium text-primary transition-all duration-200 hover:underline"
           >
-            Sign In
+            Log In
           </Link>
         </p>
-        {error && <p className="text-red-600 mt-8 text-center">{error}</p>}
 
-        <form onSubmit={handleSubmit(create)}>
+        <form onSubmit={handleSubmit(handlesignup)}>
           <div className="space-y-5">
             <Input
               label="Full Name: "
@@ -59,6 +70,11 @@ function Signup() {
                 required: true,
               })}
             />
+            {errors.name && (
+              <p className="text-red-700 mt-1 text-sm">
+                Full mame is required.
+              </p>
+            )}
             <Input
               label="Email: "
               placeholder="Enter your email"
@@ -72,6 +88,9 @@ function Signup() {
                 },
               })}
             />
+            {errors.email && (
+              <p className="text-red-700 mt-1 text-sm">Email is required.</p>
+            )}
             <Input
               label="Password: "
               type="password"
@@ -80,7 +99,13 @@ function Signup() {
                 required: true,
               })}
             />
-            <Button type="submit" className="w-full">
+            {errors.password && (
+              <p className="text-red-700 mt-1 text-sm">Password is required.</p>
+            )}
+            <Button
+              type="submit"
+              className="w-full hover:bg-zinc-200 hover:text-zinc-900 hover:font-semibold duration-200"
+            >
               Create Account
             </Button>
           </div>
@@ -88,6 +113,6 @@ function Signup() {
       </div>
     </div>
   );
-}
+};
 
 export default Signup;

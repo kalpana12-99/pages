@@ -1,10 +1,10 @@
-import conf from "../conf/conf";
+import conf from "../conf/conf.js";
 import { Client, ID, Databases, Storage, Query } from "appwrite";
 
 export class Service {
   client = new Client();
   databases;
-  storage; //or we can say its a bucket
+  bucket;
 
   constructor() {
     this.client
@@ -14,12 +14,15 @@ export class Service {
     this.bucket = new Storage(this.client);
   }
 
+  // create post
+
   async createPost({ title, slug, content, featuredImage, status, userId }) {
     try {
+      console.log(title, slug);
       return await this.databases.createDocument(
         conf.appwriteDatabaseId,
         conf.appwriteCollectionId,
-        slug,
+        slug, // document id
         {
           title,
           content,
@@ -29,11 +32,17 @@ export class Service {
         }
       );
     } catch (error) {
-      console.log("Appwrite service :: createPost :: error :: ", error);
+      console.log("Appwrite Error: Issue in creating post.");
+      throw error;
     }
-  } //to ctreate a post
+  }
 
-  async updatePost(slug, { title, content, featuredImage, status }) {
+  // update post
+
+  async updatePost(
+    slug /*document id*/,
+    { title, content, featuredImage, status }
+  ) {
     try {
       return await this.databases.updateDocument(
         conf.appwriteDatabaseId,
@@ -47,22 +56,29 @@ export class Service {
         }
       );
     } catch (error) {
-      console.log("Appwrite service :: updatePost :: error :: ", error);
+      console.log("Appwrite Error: Issue in updating post.");
+      throw error;
     }
-  } //to update the post
+  }
+
+  // delete post
 
   async deletePost(slug) {
     try {
       await this.databases.deleteDocument(
         conf.appwriteDatabaseId,
-        conf.appwriteCollectionId
+        conf.appwriteCollectionId,
+        slug
       );
+
       return true;
     } catch (error) {
-      console.log("Appwrite service :: deletePost :: error :: ", error);
-      return false;
+      console.log("Appwrite Error: Issue in deleting post.");
+      throw error;
     }
-  } //to delete the post
+  }
+
+  // get one specific post
 
   async getPost(slug) {
     try {
@@ -72,10 +88,12 @@ export class Service {
         slug
       );
     } catch (error) {
-      console.log("Appwrite service :: getPost :: error :: ", error);
-      return false;
+      console.log("Appwrite Error: Issue in getting post with slug ", slug);
+      throw error;
     }
-  } // to get a single post
+  }
+
+  // get all posts
 
   async getPosts(queries = [Query.equal("status", "active")]) {
     try {
@@ -85,12 +103,12 @@ export class Service {
         queries
       );
     } catch (error) {
-      console.log("Appwrite service :: getPosts :: error :: ", error);
-      return false;
+      console.log("Appwrite Error: Issue in getting all posts.");
+      throw error;
     }
   }
 
-  //file upload service - for photos file as the datas are store in database and the file is stored in bucket, and we just pass the link to the database
+  // upload file
 
   async uploadFile(file) {
     try {
@@ -100,28 +118,30 @@ export class Service {
         file
       );
     } catch (error) {
-      console.log("Appwrite service :: uploadFile :: error :: ", error);
-      return false;
+      console.log("Appwrite Error: Issue in uploading file.");
+      throw error;
     }
   }
 
-  //file delete
+  // delete file
 
   async deleteFile(fileId) {
     try {
       await this.bucket.deleteFile(conf.appwriteBucketId, fileId);
       return true;
     } catch (error) {
-      console.log("Appwrite service :: deteleFile :: error :: ", error);
+      console.log("Appwrite Error: Issue in deleting file.");
       return false;
     }
   }
+
+  // get file preview
 
   getFilePreview(fileId) {
     return this.bucket.getFilePreview(conf.appwriteBucketId, fileId);
   }
 }
 
-const service = new Service(); //as we dont want to export the whole class  , so we are just exporting a object
+const appwriteService = new Service();
 
-export default service;
+export { appwriteService };

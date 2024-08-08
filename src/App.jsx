@@ -1,10 +1,9 @@
-import { useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
-import "./App.css";
-import authService from "./appwrite/auth";
-import { login, logout } from "./store/authSlice";
-import Footer from "./components/Footer/Footer";
-import Header from "./components/Header/Header";
+import { authService } from "./appwrite/auth.js";
+import { useDispatch } from "react-redux";
+import { login, logout } from "./features/authSlice.js";
+import { Outlet } from "react-router-dom";
+import { Header, Footer } from "./components/index.js";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -12,7 +11,7 @@ function App() {
 
   useEffect(() => {
     authService
-      .getCurrrentUser()
+      .getCurrentUser()
       .then((userData) => {
         if (userData) {
           dispatch(login({ userData }));
@@ -20,14 +19,18 @@ function App() {
           dispatch(logout());
         }
       })
-      .finally(() => setLoading(false)); //will always run when there is error or not
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   return !loading ? (
-    <div className="min-h-screen flex flex-wrap content-between bg-gray-400">
+    <div className="min-h-screen flex flex-wrap content-between">
       <div className="w-full block">
         <Header />
-        <main>TODO: {/* <Outlet/> */}</main>
+        <main>
+          <Outlet />
+        </main>
         <Footer />
       </div>
     </div>
